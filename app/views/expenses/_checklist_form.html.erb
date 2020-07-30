@@ -1,0 +1,98 @@
+<%
+  def link_to_remove_checklist_fields(name, f, options={})
+    f.hidden_field(:_destroy) + link_to(name, "javascript:void(0)", options)
+  end
+
+  def new_object(f, association)
+    @new_object ||= f.object.class.reflect_on_association(association).klass.new
+  end
+
+  def fields(f, association)
+    @fields ||= f.fields_for(association, new_object(f, association), :child_index => "new_#{association}") do |builder|
+      render(association.to_s.singularize + "_fields", :f => builder)
+    end
+  end
+
+  def new_or_show(f)
+    if f.object.new_record?
+      if f.object.subject.present?
+        "show"
+      else
+        "new"
+      end
+    else
+      "show"
+    end
+  end
+
+  def done_css(f)
+    if f.object.is_done
+      "is-done-checklist-item"
+    else
+      ""
+    end
+  end
+
+  def can_edit_checklist_item?(checklist_item)
+    project = checklist_item.expense.project
+    User.current.allowed_to?(:done_checklists, project) ||
+        User.current.allowed_to?(:edit_checklists, project)
+  end
+
+  def done_item_css_class(checklist_item)
+    checklist_item.is_done ? 'is-done-checklist-item' : ''
+  end
+
+  def section_item_css_class(checklist_item)
+    ''
+  end
+%>
+<% if  true # User.current.allowed_to?(:edit_checklists, @project, :global => true) %>
+  <%= javascript_include_tag 'expense_checklists', plugin: 'redmine_expense_checklists'%>
+  <div class="tabular">
+    <p id="checklist_form">
+      <label><%=l(:label_checklist_plural)%></label>
+      <% @expense.checklists.build if @expense.checklists.blank? || @expense.checklists.last.subject.present? %>
+      <%= fields_for :expense, expense do |f| -%>
+        <span id="checklist_form_items" data-checklist-fields='<span class="checklist-item new " id="">
+    <span class="checklist-show-only checklist-checkbox"><input name="expense[checklists_attributes][new_checklists][is_done]" type="hidden" value="0" /><input type="checkbox" value="1" name="expense[checklists_attributes][new_checklists][is_done]" id="expense_checklists_attributes_new_checklists_is_done" /></span>
+
+  <span class="checklist-show checklist-subject ">
+    
+  </span>
+
+  <span class="checklist-edit checklist-new checklist-edit-box">
+    <input type="text" id="" class="edit-box" />
+    <input class="checklist-subject-hidden" type="hidden" name="expense[checklists_attributes][new_checklists][subject]" id="expense_checklists_attributes_new_checklists_subject" />
+  </span>
+
+  <span class="checklist-edit-only checklist-edit-save-button"><input type="button" name="commit" value="Save" class="item item-save small" data-disable-with="Save" /> </span>
+  <span class="checklist-edit-only checklist-edit-reset-button">Cancel </span>
+  <span class="checklist-show-only checklist-remove"><input type="hidden" value="false" name="expense[checklists_attributes][new_checklists][_destroy]" id="expense_checklists_attributes_new_checklists__destroy" /><a class="icon icon-del" href="javascript:void(0)"></a></span>
+
+  <input class="checklist-item-position" type="hidden" value="1" name="expense[checklists_attributes][new_checklists][position]" id="expense_checklists_attributes_new_checklists_position" />
+  <input class="checklist-item-is_section" type="hidden" value="false" name="expense[checklists_attributes][new_checklists][is_section]" id="expense_checklists_attributes_new_checklists_is_section" />
+  <input class="checklist-item-id" type="hidden" name="expense[checklists_attributes][new_checklists][id]" id="expense_checklists_attributes_new_checklists_id" />
+
+  <span class="icon icon-add checklist-new-only save-new-by-button"></span>
+
+ <br>
+</span>
+'>
+          <%= f.fields_for :checklists do |builder| %>
+            <%= render :partial => 'checklist_fields', :locals => {:f => builder, :checklist => @checklist} %>
+          <% end %>
+        </span>
+  <% end %>
+    </p>
+  </div>
+<% end %>
+
+<%= javascript_tag do %>
+  <% unless User.current.allowed_to?(:done_checklists, @project) %>
+    $("#checklist_items input").attr("disabled", true);
+  <% end %>
+
+  $("span#checklist_form_items").expense_checklist();
+  $("#checklist_items").expense_checklist();
+<% end %>
