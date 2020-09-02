@@ -17,8 +17,7 @@ module RedmineExpenseChecklists
             accepts_nested_attributes_for :checklists, :allow_destroy => true, :reject_if => proc { |attrs| attrs['subject'].blank? }
 
 
-            safe_attributes 'checklists_attributes',
-                            :if => lambda { |expense, user| (user.allowed_to?(:done_checklists, expense.project) || user.allowed_to?(:edit_checklists, expense.project)) }
+            safe_attributes 'checklists_attributes'
           end
         end
 
