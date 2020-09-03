@@ -83,9 +83,45 @@
             <%= render :partial => 'checklist_fields', :locals => {:f => builder, :checklist => @checklist} %>
           <% end %>
         </span>
-  <% end %>
+      <% end %>
     </p>
+    <i class="icon icon-duplicate " id="bulk_checklist" style="cursor: pointer"> Add bulk checklist</i>
   </div>
+  <div id="dialog-form" title="Import bulk checklist">
+    <p class="validateTips"></p>
+    <textarea id="bulk_checklist_textarea" cols="35" rows="16"></textarea>
+  </div>
+  <script>
+    $( function() {
+      dialog = $( "#dialog-form" ).dialog({
+        autoOpen: false,
+        height: 400,
+        width: 350,
+        modal: true,
+        buttons: {
+          "Import": function(){
+            v = $('#bulk_checklist_textarea').val().split("\n")
+            for(i=0; i< v.length; i++){
+              if(v[i].trim().length > 0 )
+                $('.edit-box:last').val(v[i])
+              $('.save-new-by-button:last').click();
+            }
+            dialog.dialog( "close" );
+          },
+          Cancel: function() {
+            dialog.dialog( "close" );
+          }
+        },
+        close: function() {
+        }
+      });
+
+      $('#bulk_checklist').on('click', function(){
+        $('#bulk_checklist_textarea').val('');
+        dialog.dialog( "open" );
+      })
+    } );
+  </script>
 <% end %>
 
 <%= javascript_tag do %>
